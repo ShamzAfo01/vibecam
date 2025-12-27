@@ -1,0 +1,8 @@
+{
+  "name": "VibeCam Studio",
+  "description": "A professional-grade video and screen recorder with a sleek SwiftUI-inspired design, featuring real-time camera and microphone integration.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
