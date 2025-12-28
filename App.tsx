@@ -158,7 +158,7 @@ const App: React.FC = () => {
 
       <main className={`flex flex-col items-center justify-center h-full transition-all duration-1000 ${status === RecordingStatus.RECORDING ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'}`}>
 
-        <div className="flex flex-row space-x-12 items-start justify-center">
+        <div className="flex flex-row space-x-12 items-start mt-[240px] justify-center">
           {/* Step 1 */}
           <div className="flex flex-col space-y-4">
             <h3 className={currentStep === SetupStep.STEP_1 ? activeTitleStyle : inactiveTitleStyle}>
