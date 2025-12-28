@@ -1,16 +1,21 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { SetupStep } from '../types';
 
 interface StepPanelProps {
-  active?: boolean;
+  step: SetupStep;
+  currentStep: SetupStep;
   type?: 'screen' | 'camera' | 'record';
   stream?: MediaStream | null;
   label: string;
   cameraOn?: boolean;
 }
 
-const StepPanel: React.FC<StepPanelProps> = ({ stream, label, type = 'screen', cameraOn }) => {
+const StepPanel: React.FC<StepPanelProps> = ({ step, currentStep, stream, label, type = 'screen', cameraOn }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [screenAnimState, setScreenAnimState] = useState(0);
+  const [cameraAnimPhase, setCameraAnimPhase] = useState(0); // 0: initial, 1: red dot trans, 2: mic ui, 3: active
+  const [recordAnimPhase, setRecordAnimPhase] = useState(0); // 0: blue button, 1: preview ui
 
   useEffect(() => {
     if (videoRef.current && stream) {
@@ -18,49 +23,150 @@ const StepPanel: React.FC<StepPanelProps> = ({ stream, label, type = 'screen', c
     }
   }, [stream]);
 
-  const renderIcon = () => {
-    switch (type) {
-      case 'camera':
-        return (
-          <svg width="32" height="32" viewBox="0 0 256 256" fill="currentColor" className={cameraOn ? "text-[#036AFF]" : "text-[#ACACAC]"}>
-            <path d="M224,72a8,8,0,0,0-8,0l-40,24V80a16,16,0,0,0-16-16H32A16,16,0,0,0,16,80V176a16,16,0,0,0,16,16H160a16,16,0,0,0,16-16V160l40,24a8,8,0,0,0,8,0,8,8,0,0,0,4-6.92V78.92A8,8,0,0,0,224,72ZM160,176H32V80H160Zm48-18.36L176,138.38V117.62l32-19.26Z"></path>
-          </svg>
-        );
-      case 'record':
-        return (
-          <svg width="32" height="32" viewBox="0 0 256 256" fill="#ACACAC">
-            <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm40-88a40,40,0,1,1-40-40A40,40,0,0,1,168,128Z"></path>
-          </svg>
-        );
-      default: // screen
-        return (
-          <svg width="32" height="32" viewBox="0 0 256 256" fill="#ACACAC">
-            <path d="M208,40H48A16,16,0,0,0,32,56V160a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V56A16,16,0,0,0,208,40Zm0,120H48V56H208V160ZM160,208a8,8,0,0,1-8,8H104a8,8,0,0,1,0-16h48a8,8,0,0,1,0-16H136V128.4A80.09,80.09,0,0,1,208,128Z"></path>
-          </svg>
-        );
+  // Screen 1 Loop
+  useEffect(() => {
+    if (type === 'screen' && currentStep === SetupStep.STEP_1 && !stream) {
+      const cycle = async () => {
+        await new Promise(r => setTimeout(r, 1500));
+        setScreenAnimState(1);
+        await new Promise(r => setTimeout(r, 2000));
+        setScreenAnimState(0);
+      };
+      const interval = setInterval(cycle, 4500);
+      cycle();
+      return () => clearInterval(interval);
     }
-  };
+    if (currentStep > SetupStep.STEP_1) {
+      setScreenAnimState(0); // Static first frame
+    }
+  }, [type, currentStep, stream]);
+
+  // Screen 2 Animation Sequence (Very Slow and Smooth)
+  useEffect(() => {
+    if (type === 'camera' && currentStep === SetupStep.STEP_2 && !stream) {
+      const sequence = async () => {
+        setCameraAnimPhase(0);
+        await new Promise(r => setTimeout(r, 1500));
+        setCameraAnimPhase(1); // radio button trans
+        await new Promise(r => setTimeout(r, 2500));
+        setCameraAnimPhase(2); // Mic UI trans
+        await new Promise(r => setTimeout(r, 2500));
+        setCameraAnimPhase(3); // Mic Active
+      };
+      sequence();
+    }
+  }, [type, currentStep, stream]);
+
+  // Screen 3 Animation Sequence (Very Slow)
+  useEffect(() => {
+    if (type === 'record' && currentStep === SetupStep.STEP_3) {
+      const sequence = async () => {
+        setRecordAnimPhase(0);
+        await new Promise(r => setTimeout(r, 3000));
+        setRecordAnimPhase(1);
+      };
+      sequence();
+    }
+  }, [type, currentStep]);
+
+  const TrafficLights = ({ align }: { align: 'left' | 'right' }) => (
+    <div className={`absolute top-3 flex gap-1.5 transition-all duration-1000 ease-in-out z-40 ${align === 'left' ? 'left-3' : 'right-3 flex-row-reverse'}`}>
+      <div className="w-2 h-2 rounded-full bg-[#FE5F58]" />
+      <div className="w-2 h-2 rounded-full bg-[#FEBC2E]" />
+      <div className="w-2 h-2 rounded-full bg-[#28C840]" />
+    </div>
+  );
+
+  // Placeholder State (Future steps)
+  if (currentStep < step) {
+    return (
+      <div className="w-[312px] h-[196px] bg-[#F9F9F9] border border-[#EDEDED] rounded-[24px]" />
+    );
+  }
+
+  // SCREEN 1: Screen Selection
+  if (type === 'screen' && !stream) {
+    return (
+      <div className={`relative w-[312px] h-[196px] border border-[#EDEDED] rounded-[24px] overflow-hidden transition-all duration-1000 ease-in-out flex flex-col items-center justify-center shadow-sm ${screenAnimState === 0 ? 'bg-[#F9F9F9]' : 'bg-[#F6F6F6]'}`}>
+        <div className={`absolute w-[271px] h-[150px] top-[46px] bg-white border border-dashed border-[#D1D1D1] transition-all duration-1000 ease-in-out ${screenAnimState === 0 ? 'left-[41px] rounded-[24px_4px_4px_4px]' : 'left-[0px] rounded-[4px_24px_4px_4px]'}`}>
+          <TrafficLights align={screenAnimState === 0 ? 'left' : 'right'} />
+          <div className={`absolute top-[14px] w-[239px] h-[18px] transition-all duration-1000 ease-in-out flex flex-col gap-[4px] ${screenAnimState === 0 ? 'left-[52px] items-end' : 'left-[19px] items-start'}`}>
+            <div className={`h-[7px] bg-[#F1F1F1] rounded-[4px] transition-all duration-1000 ${screenAnimState === 0 ? 'w-[79px]' : 'w-[77px]'}`} />
+            <div className="w-[34px] h-[7px] bg-[#F1F1F1] rounded-[4px]" />
+          </div>
+        </div>
+        <div className={`absolute w-[20px] h-[20px] bg-white rounded-full shadow-lg border border-black/5 transition-all duration-1000 ease-in-out flex items-center justify-center z-10 ${screenAnimState === 0 ? 'left-[11px] top-[162px]' : 'left-[281px] top-[161px]'}`}>
+          <div className={`w-1 h-3 bg-[#404040] transition-transform duration-1000 ${screenAnimState === 0 ? 'rotate-[132deg]' : 'rotate-[-132deg]'}`} />
+        </div>
+      </div>
+    );
+  }
+
+  // SCREEN 2: Camera & Mic
+  if (type === 'camera' && !stream) {
+    return (
+      <div className="relative w-[312px] h-[196px] border border-[#EDEDED] rounded-[24px] overflow-hidden transition-all duration-1000 ease-in-out bg-[#F6F6F6] flex items-center justify-center">
+        <TrafficLights align="left" />
+        {cameraAnimPhase < 2 ? (
+          <div className="absolute w-[110px] h-[70px] left-[184px] top-[108px] bg-white rounded-[8px] transition-all duration-1500 overflow-hidden">
+             {/* Red dot transition - subtler scaling to keep sizes similar and in range */}
+             <div className={`absolute w-4 h-4 rounded-full bg-[#FFB8B8] flex items-center justify-center transition-all duration-1500 ${cameraAnimPhase === 0 ? 'left-[3px] top-[3px]' : 'left-[3px] top-[3px] scale-[1.15]'}`}>
+               <div className="w-3 h-3 rounded-full bg-[#F70101] flex items-center justify-center shadow-sm">
+                 <div className="w-2 h-2 rounded-full bg-[#F70101]" />
+               </div>
+             </div>
+          </div>
+        ) : (
+          <div className="relative w-full h-full">
+            <div className="absolute w-[164px] h-[33px] left-[74px] top-[146px] bg-white rounded-[24px] transition-opacity duration-1500" />
+            <div className={`absolute w-[50px] h-[50px] left-[131px] top-[138px] rounded-full flex items-center justify-center transition-all duration-1500 ${cameraAnimPhase === 3 ? 'bg-[#036AFF]' : 'bg-[#D8E8FF]'}`}>
+               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="z-10">
+                  <path d="M12 15C13.6569 15 15 13.6569 15 12V6C15 4.34315 13.6569 3 12 3C10.3431 3 9 4.34315 9 6V12C9 13.6569 10.3431 15 12 15ZM5 10V11C5 14.87 8.13 18 12 18C15.87 18 19 14.87 19 11V10" stroke={cameraAnimPhase === 3 ? 'white' : '#036AFF'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+               </svg>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // SCREEN 3: Record Initiation
+  if (type === 'record') {
+    return (
+      <div className="relative w-[312px] h-[196px] border border-[#EDEDED] rounded-[24px] overflow-hidden transition-all duration-1000 ease-in-out bg-[#F6F6F6] flex items-center justify-center">
+        <TrafficLights align="left" />
+        {recordAnimPhase === 0 ? (
+          <div className="absolute w-[196px] h-[55px] left-[58px] top-[70px] bg-[#036AFF] border border-[#0148AF] shadow-[inset_0px_2px_4px_#7AACF5] rounded-[99px] flex items-center justify-center gap-[16px]">
+             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+               <path d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+               <rect x="9" y="9" width="6" height="6" rx="1.5" fill="white" />
+             </svg>
+             <div className="w-[124px] h-[9px] bg-[#A2C8FF] rounded-[4px]" />
+          </div>
+        ) : (
+          <div className="relative w-full h-full">
+            {/* Transparent dark frame Frame 1000011112 */}
+            <div className="absolute w-full h-[55px] bg-[#222222]/36 top-0 left-0 z-10" />
+            
+            {/* White playback preview mockup reaching the bottom edge Frame 1000011101 */}
+            <div className="absolute inset-x-0 bottom-0 top-[42px] bg-white border border-dashed border-[#D1D1D1] rounded-t-[8px] z-20" />
+            
+            {/* Top right icon Controls */}
+            <div className="absolute top-[8px] right-[10px] z-30">
+               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                 <path d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="#E0E0E0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                 <path d="M10 8L15.5 12L10 16V8Z" fill="#E0E0E0"/>
+               </svg>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
-    <div className="w-[312px] h-[196px] bg-[#F9F9F9] border border-[#EDEDED] rounded-[24px] overflow-hidden flex flex-col items-center justify-center p-6 text-center transition-all hover:border-[#036AFF]/40 group shadow-sm hover:shadow-md">
-      {stream ? (
-        <video 
-          ref={videoRef} 
-          autoPlay 
-          muted 
-          playsInline 
-          className="w-full h-full object-cover rounded-xl"
-        />
-      ) : (
-        <div className="flex flex-col items-center space-y-4">
-          <div className="w-14 h-14 bg-white rounded-2xl shadow-sm border border-[#EDEDED] flex items-center justify-center group-hover:border-[#036AFF]/20 transition-colors">
-            {renderIcon()}
-          </div>
-          <p className="text-[14px] text-[#9C9C9C] px-2 leading-relaxed font-normal">
-            {label}
-          </p>
-        </div>
-      )}
+    <div className="w-[312px] h-[196px] bg-[#F9F9F9] border border-[#EDEDED] rounded-[24px] flex items-center justify-center p-6 text-center shadow-sm">
+      <p className="text-[14px] text-[#9C9C9C] font-normal">{label}</p>
     </div>
   );
 };

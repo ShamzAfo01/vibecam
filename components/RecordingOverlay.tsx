@@ -37,10 +37,11 @@ const RecordingOverlay: React.FC<RecordingOverlayProps> = ({ time, cameraStream,
 
         <button 
           onClick={onStop}
-          className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-full font-medium transition-all shadow-lg pointer-events-auto active:scale-95 flex items-center gap-2 group"
+          className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-full font-medium transition-all shadow-lg pointer-events-auto active:scale-95 flex items-center gap-3 group"
         >
-          <svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor">
-            <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm32-88a8,8,0,0,1-8,8H104a8,8,0,0,1-8-8V104a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8Z"></path>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <rect x="9" y="9" width="6" height="6" rx="1.2" fill="currentColor" />
           </svg>
           Stop & Save
         </button>

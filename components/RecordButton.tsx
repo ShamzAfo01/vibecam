@@ -10,6 +10,7 @@ interface RecordButtonProps {
 
 const RecordButton: React.FC<RecordButtonProps> = ({ status, onStart, onStop }) => {
   const isRecording = status === RecordingStatus.RECORDING;
+  const strokeWidth = 1.8;
 
   return (
     <button 
@@ -26,12 +27,14 @@ const RecordButton: React.FC<RecordButtonProps> = ({ status, onStart, onStop }) 
     >
       <div className="relative w-7 h-7 flex items-center justify-center">
         {isRecording ? (
-           <svg width="24" height="24" viewBox="0 0 256 256" fill="white">
-             <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm32-88a8,8,0,0,1-8,8H104a8,8,0,0,1-8-8V104a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8Z"></path>
+           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+             <path d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="white" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"/>
+             <rect x="9" y="9" width="6" height="6" rx="1.5" fill="white" />
            </svg>
         ) : (
-          <svg width="24" height="24" viewBox="0 0 256 256" fill="white">
-            <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm40-88a40,40,0,1,1-40-40A40,40,0,0,1,168,128Z"></path>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="white" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"/>
+            <circle cx="12" cy="12" r="4.5" fill="white" />
           </svg>
         )}
       </div>
