@@ -14,7 +14,7 @@ interface StepPanelProps {
 const StepPanel: React.FC<StepPanelProps> = ({ step, currentStep, stream, label, type = 'screen', cameraOn }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [screenAnimState, setScreenAnimState] = useState(0);
-  const [cameraAnimPhase, setCameraAnimPhase] = useState(0); // 0: initial, 1: red dot trans, 2: mic ui, 3: active
+  const [cameraAnimPhase, setCameraAnimPhase] = useState(0); // 0: initial, 1: first big, 1.1: second small, 1.2: second big, 2: mic ui, 3: active
   const [recordAnimPhase, setRecordAnimPhase] = useState(0); // 0: blue button, 1: preview ui
 
   useEffect(() => {
@@ -41,17 +41,26 @@ const StepPanel: React.FC<StepPanelProps> = ({ step, currentStep, stream, label,
     }
   }, [type, currentStep, stream]);
 
-  // Screen 2 Animation Sequence (Very Slow and Smooth)
+  // Screen 2 Animation Sequence (Bouncy and Organic)
   useEffect(() => {
     if (type === 'camera' && currentStep === SetupStep.STEP_2 && !stream) {
       const sequence = async () => {
-        setCameraAnimPhase(0);
-        await new Promise(r => setTimeout(r, 1500));
-        setCameraAnimPhase(1); // radio button trans
-        await new Promise(r => setTimeout(r, 2500));
-        setCameraAnimPhase(2); // Mic UI trans
-        await new Promise(r => setTimeout(r, 2500));
-        setCameraAnimPhase(3); // Mic Active
+        setCameraAnimPhase(0); // Initial small
+        await new Promise(r => setTimeout(r, 1200));
+        
+        setCameraAnimPhase(1); // Pulse 1: Big
+        await new Promise(r => setTimeout(r, 600));
+        
+        setCameraAnimPhase(1.1); // Transition: Small
+        await new Promise(r => setTimeout(r, 600));
+        
+        setCameraAnimPhase(1.2); // Pulse 2: Big
+        await new Promise(r => setTimeout(r, 800));
+        
+        setCameraAnimPhase(2); // Mic UI transition starts
+        await new Promise(r => setTimeout(r, 1800));
+        
+        setCameraAnimPhase(3); // Mic Active "Pop"
       };
       sequence();
     }
@@ -104,24 +113,51 @@ const StepPanel: React.FC<StepPanelProps> = ({ step, currentStep, stream, label,
 
   // SCREEN 2: Camera & Mic
   if (type === 'camera' && !stream) {
+    const isBig = cameraAnimPhase === 1 || cameraAnimPhase === 1.2;
+    const isMicActive = cameraAnimPhase === 3;
+
     return (
       <div className="relative w-[312px] h-[196px] border border-[#EDEDED] rounded-[24px] overflow-hidden transition-all duration-1000 ease-in-out bg-[#F6F6F6] flex items-center justify-center">
         <TrafficLights align="left" />
         {cameraAnimPhase < 2 ? (
-          <div className="absolute w-[110px] h-[70px] left-[184px] top-[108px] bg-white rounded-[8px] transition-all duration-1500 overflow-hidden">
-             {/* Red dot transition - subtler scaling to keep sizes similar and in range */}
-             <div className={`absolute w-4 h-4 rounded-full bg-[#FFB8B8] flex items-center justify-center transition-all duration-1500 ${cameraAnimPhase === 0 ? 'left-[3px] top-[3px]' : 'left-[3px] top-[3px] scale-[1.15]'}`}>
+          <div className="absolute w-[110px] h-[70px] left-[184px] top-[108px] bg-white rounded-[8px] transition-all duration-1500 overflow-hidden shadow-sm">
+             {/* Red dot transition - Custom cubic-bezier for springy feel */}
+             <div 
+               className={`absolute w-4 h-4 rounded-full bg-[#FFB8B8] flex items-center justify-center left-[3px] top-[3px] transition-transform duration-[600ms] ${isBig ? 'scale-[1.25]' : 'scale-100'}`}
+               style={{ transitionTimingFunction: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}
+             >
                <div className="w-3 h-3 rounded-full bg-[#F70101] flex items-center justify-center shadow-sm">
                  <div className="w-2 h-2 rounded-full bg-[#F70101]" />
                </div>
              </div>
           </div>
         ) : (
-          <div className="relative w-full h-full">
-            <div className="absolute w-[164px] h-[33px] left-[74px] top-[146px] bg-white rounded-[24px] transition-opacity duration-1500" />
-            <div className={`absolute w-[50px] h-[50px] left-[131px] top-[138px] rounded-full flex items-center justify-center transition-all duration-1500 ${cameraAnimPhase === 3 ? 'bg-[#036AFF]' : 'bg-[#D8E8FF]'}`}>
-               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="z-10">
-                  <path d="M12 15C13.6569 15 15 13.6569 15 12V6C15 4.34315 13.6569 3 12 3C10.3431 3 9 4.34315 9 6V12C9 13.6569 10.3431 15 12 15ZM5 10V11C5 14.87 8.13 18 12 18C15.87 18 19 14.87 19 11V10" stroke={cameraAnimPhase === 3 ? 'white' : '#036AFF'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <div className="relative w-full h-full flex items-center justify-center">
+            {/* White pill background - Bouncy entry */}
+            <div 
+              className={`absolute w-[164px] h-[33px] bg-white rounded-[24px] transition-all duration-[800ms] shadow-sm top-[146px] left-[74px] ${cameraAnimPhase >= 2 ? 'opacity-100 scale-100' : 'opacity-0 scale-75 translate-y-4'}`} 
+              style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+            />
+            
+            {/* Mic Circle - Pop animation on activation */}
+            <div 
+              className={`absolute w-[50px] h-[50px] left-[131px] top-[138px] rounded-full flex items-center justify-center transition-all duration-[600ms] shadow-md z-10 ${isMicActive ? 'bg-[#036AFF] scale-100' : 'bg-[#D8E8FF] scale-[0.9]'}`}
+              style={{ transitionTimingFunction: 'cubic-bezier(0.68, -0.6, 0.32, 1.6)' }}
+            >
+               <svg 
+                 width="24" 
+                 height="24" 
+                 viewBox="0 0 24 24" 
+                 fill="none" 
+                 className={`transition-transform duration-500 ${isMicActive ? 'scale-110' : 'scale-100'}`}
+               >
+                  <path 
+                    d="M12 15C13.6569 15 15 13.6569 15 12V6C15 4.34315 13.6569 3 12 3C10.3431 3 9 4.34315 9 6V12C9 13.6569 10.3431 15 12 15ZM5 10V11C5 14.87 8.13 18 12 18C15.87 18 19 14.87 19 11V10" 
+                    stroke={isMicActive ? 'white' : '#036AFF'} 
+                    strokeWidth="1.8" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  />
                </svg>
             </div>
           </div>

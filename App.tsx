@@ -19,11 +19,11 @@ const App: React.FC = () => {
     isCameraOn: false,
     isMicOn: true,
   });
-
+  
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
-
+  
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const timerRef = useRef<number | null>(null);
 
@@ -40,7 +40,7 @@ const App: React.FC = () => {
       // Step 1: Animation runs
       await new Promise(r => setTimeout(r, 6000));
       setCurrentStep(SetupStep.STEP_2);
-
+      
       // Step 2: Animation runs
       await new Promise(r => setTimeout(r, 8000));
       setCurrentStep(SetupStep.STEP_3);
@@ -92,7 +92,7 @@ const App: React.FC = () => {
 
       const recorder = new MediaRecorder(screen, { mimeType: 'video/webm' });
       mediaRecorderRef.current = recorder;
-
+      
       const chunks: Blob[] = [];
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunks.push(e.data);
@@ -105,7 +105,7 @@ const App: React.FC = () => {
         a.href = url;
         a.download = `vibecam-${Date.now()}.webm`;
         a.click();
-
+        
         if (screenStream) screenStream.getTracks().forEach(t => t.stop());
         if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
         setScreenStream(null);
@@ -116,7 +116,7 @@ const App: React.FC = () => {
 
       recorder.start();
       setStatus(RecordingStatus.RECORDING);
-
+      
       timerRef.current = window.setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
@@ -151,20 +151,20 @@ const App: React.FC = () => {
 
       {/* Hover Information Display */}
       <div className="absolute top-[120px] left-1/2 -translate-x-1/2 w-full flex justify-center pointer-events-none z-[60]">
-        <span className={`text-[15px] font-normal leading-[18px] tracking-[0.005em] text-[#9C9C9C] transition-all duration-300 ${hoveredToolbarName ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
-          {hoveredToolbarName}
-        </span>
+         <span className={`text-[15px] font-normal leading-[18px] tracking-[0.005em] text-[#9C9C9C] transition-all duration-300 ${hoveredToolbarName ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+           {hoveredToolbarName}
+         </span>
       </div>
 
       <main className={`flex flex-col items-center justify-center h-full transition-all duration-1000 ${status === RecordingStatus.RECORDING ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'}`}>
-
-        <div className="flex flex-row space-x-12 items-start justify-center">
+        
+        <div className="flex flex-row space-x-12 items-start mt-[-80px]">
           {/* Step 1 */}
           <div className="flex flex-col space-y-4">
             <h3 className={currentStep === SetupStep.STEP_1 ? activeTitleStyle : inactiveTitleStyle}>
               1. Choose a screen
             </h3>
-            <StepPanel
+            <StepPanel 
               type="screen"
               step={SetupStep.STEP_1}
               currentStep={currentStep}
@@ -175,10 +175,10 @@ const App: React.FC = () => {
 
           {/* Step 2 */}
           <div className="flex flex-col space-y-4">
-            <h3 className={currentStep === SetupStep.STEP_2 ? activeTitleStyle : inactiveTitleStyle}>
+             <h3 className={currentStep === SetupStep.STEP_2 ? activeTitleStyle : inactiveTitleStyle}>
               2. Choose a camera, microphone.
             </h3>
-            <StepPanel
+            <StepPanel 
               type="camera"
               step={SetupStep.STEP_2}
               currentStep={currentStep}
@@ -190,10 +190,10 @@ const App: React.FC = () => {
 
           {/* Step 3 */}
           <div className="flex flex-col space-y-4">
-            <h3 className={currentStep === SetupStep.STEP_3 ? activeTitleStyle : inactiveTitleStyle}>
+             <h3 className={currentStep === SetupStep.STEP_3 ? activeTitleStyle : inactiveTitleStyle}>
               3. Click on record
             </h3>
-            <StepPanel
+            <StepPanel 
               type="record"
               step={SetupStep.STEP_3}
               currentStep={currentStep}
@@ -204,15 +204,15 @@ const App: React.FC = () => {
 
         {/* Record Button Eases in ONLY after Step 3 animation is complete */}
         <div className={`mt-20 transition-all duration-1000 ease-in-out ${isSetupComplete ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
-          <RecordButton
-            status={status}
-            onStart={startRecording}
-            onStop={stopRecording}
+          <RecordButton 
+            status={status} 
+            onStart={startRecording} 
+            onStop={stopRecording} 
           />
         </div>
       </main>
 
-      <FloatingToolbar
+      <FloatingToolbar 
         mediaState={mediaState}
         currentStep={currentStep}
         onToggleCamera={toggleCamera}
@@ -222,8 +222,8 @@ const App: React.FC = () => {
       />
 
       {status === RecordingStatus.RECORDING && (
-        <RecordingOverlay
-          time={recordingTime}
+        <RecordingOverlay 
+          time={recordingTime} 
           cameraStream={cameraStream}
           onStop={stopRecording}
         />
